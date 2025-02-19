@@ -22,7 +22,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: Home },
-  { title: "Upload Project", href: "/dashboard/upload", icon: Upload },
+  { title: "Upload Files", href: "/dashboard/upload", icon: Upload },
 ];
 
 export function DashboardNav() {
@@ -30,17 +30,24 @@ export function DashboardNav() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="flex items-center px-4 py-2">
-        <h2 className="text-lg font-semibold">Project Dashboard</h2>
-      </SidebarHeader>
+      <img
+        src="logo-name-white.svg"
+        alt="Mitratel Logo"
+        className="w-full max-w-md p-5"
+      />
+      {/* <SidebarHeader className="flex items-center px-4 py-2">
+        <h2 className="text-lg font-semibold text-white">
+          FIBERIZATION DASHBOARD
+        </h2>
+      </SidebarHeader> */}
       <SidebarContent>
         <SidebarMenu>
           {navItems.map((item) => (
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton asChild isActive={pathname === item.href}>
                 <Link href={item.href}>
-                  <item.icon className="mr-2 h-4 w-4" />
-                  <span>{item.title}</span>
+                  <item.icon className="mr-2 h-4 w-4 text-white" />
+                  <span className="text-white">{item.title}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -48,7 +55,11 @@ export function DashboardNav() {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
-        <Button variant="ghost" className="w-full justify-start" asChild>
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-white"
+          asChild
+        >
           <Link href="/">
             <LogOut className="mr-2 h-4 w-4" />
             <span>Logout</span>

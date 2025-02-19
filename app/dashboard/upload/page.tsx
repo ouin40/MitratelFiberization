@@ -20,38 +20,22 @@ export const metadata: Metadata = {
 export default function UploadProjectPage() {
   return (
     <div className="space-y-4">
-      <h1 className="text-3xl font-bold">Upload Project</h1>
+      <h1 className="text-3xl font-bold">Upload Files</h1>
       <Card className="max-w-2xl">
         <CardHeader>
-          <CardTitle>New Project</CardTitle>
+          <CardTitle>New Files</CardTitle>
           <CardDescription>
-            Fill in the details to upload a new project
+            Click the "Choose file" button to upload
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="project-name">Project Name</Label>
-            <Input
-              id="project-name"
-              placeholder="Enter project name"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="project-description">Project Description</Label>
-            <Textarea
-              id="project-description"
-              placeholder="Enter project description"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="project-file">Project File</Label>
+            <Label htmlFor="project-file">KML File</Label>
             <Input id="project-file" type="file" required />
           </div>
         </CardContent>
         <CardFooter>
-          <Button className="w-full">Upload Project</Button>
+          <Button className="w-full">Upload Files</Button>
         </CardFooter>
       </Card>
     </div>
