@@ -1,3 +1,5 @@
+"use client";
+
 import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,10 +14,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-export const metadata: Metadata = {
-  title: "Upload",
-  description: "Upload new things",
-};
+// export const metadata: Metadata = {
+//   title: "Upload",
+//   description: "Upload new things",
+// };
 
 export default function UploadProjectPage() {
   return (
@@ -31,7 +33,16 @@ export default function UploadProjectPage() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="project-file">KML File</Label>
-            <Input id="project-file" type="file" required />
+            <Input
+              id="project-file"
+              type="file"
+              required
+              className="cursor-pointer transition-all duration-200 ease-in-out hover:ring-2 hover:ring-red-400"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) console.log("Selected file:", file.name);
+              }}
+            />
           </div>
         </CardContent>
         <CardFooter>
