@@ -30,6 +30,17 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   type FileWithFlags,
   getAllFiles,
@@ -45,6 +56,11 @@ export default function FilesPage() {
     "uploadedAt"
   );
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDownloadConfirm, setShowDownloadConfirm] = useState(false);
+  const [filesToDelete, setFilesToDelete] = useState<string[]>([]);
+  const [filesToDownload, setFilesToDownload] = useState<FileWithFlags[]>([]);
 
   // Load files from IndexedDB on component mount
   useEffect(() => {
@@ -127,22 +143,88 @@ export default function FilesPage() {
   };
 
   const handleDeleteFile = async (id: string) => {
-    try {
-      await deleteFile(id);
-      setFiles(files.filter((file) => file.id !== id));
-    } catch (error) {
-      console.error("Error deleting file:", error);
-    }
+    setFilesToDelete([id]);
+    setShowDeleteConfirm(true);
   };
 
   const handleDownloadFile = (file: FileWithFlags) => {
-    const link = document.createElement("a");
-    link.href = file.data;
-    link.download = file.name;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    setFilesToDownload([file]);
+    setShowDownloadConfirm(true);
   };
+
+  const confirmDelete = async () => {
+    try {
+      // Delete all files in filesToDelete
+      for (const id of filesToDelete) {
+        await deleteFile(id);
+      }
+
+      // Update state
+      setFiles(files.filter((file) => !filesToDelete.includes(file.id)));
+
+      // Clear selection if deleted files were selected
+      setSelectedFiles(
+        selectedFiles.filter((id) => !filesToDelete.includes(id))
+      );
+    } catch (error) {
+      console.error("Error deleting files:", error);
+    } finally {
+      setShowDeleteConfirm(false);
+      setFilesToDelete([]);
+    }
+  };
+
+  const confirmDownload = () => {
+    // Download all files in filesToDownload
+    filesToDownload.forEach((file) => {
+      const link = document.createElement("a");
+      link.href = file.data;
+      link.download = file.name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+
+    setShowDownloadConfirm(false);
+    setFilesToDownload([]);
+  };
+
+  const handleSelectFile = (id: string, checked: boolean) => {
+    if (checked) {
+      setSelectedFiles([...selectedFiles, id]);
+    } else {
+      setSelectedFiles(selectedFiles.filter((fileId) => fileId !== id));
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedFiles(sortedFiles.map((file) => file.id));
+    } else {
+      setSelectedFiles([]);
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedFiles.length === 0) return;
+
+    setFilesToDelete([...selectedFiles]);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleBulkDownload = () => {
+    if (selectedFiles.length === 0) return;
+
+    const filesToDownload = files.filter((file) =>
+      selectedFiles.includes(file.id)
+    );
+    setFilesToDownload(filesToDownload);
+    setShowDownloadConfirm(true);
+  };
+
+  // Calculate if the "select all" checkbox should be in an indeterminate state
+  const isIndeterminate =
+    selectedFiles.length > 0 && selectedFiles.length < sortedFiles.length;
 
   return (
     <div className="space-y-6">
@@ -186,18 +268,59 @@ export default function FilesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Uploaded Files</CardTitle>
-          <CardDescription>
-            Manage your uploaded files. Files starting with &apos;X&apos; are
-            flagged as lacking a date, and files starting with &apos;-&apos; are
-            flagged as lacking an ID.
-          </CardDescription>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <CardTitle>Uploaded Files</CardTitle>
+              <CardDescription>
+                Manage your uploaded files. Files starting with &apos;X&apos;
+                are flagged as lacking a date, and files starting with
+                &apos;-&apos; are flagged as lacking an ID.
+              </CardDescription>
+            </div>
+
+            {selectedFiles.length > 0 && (
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="px-2 py-1">
+                  {selectedFiles.length} selected
+                </Badge>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-green-600 border-green-600 hover:bg-green-50"
+                  onClick={handleBulkDownload}
+                >
+                  <Download className="h-4 w-4 mr-1" />
+                  Download
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-red-600 border-red-600 hover:bg-red-50"
+                  onClick={handleBulkDelete}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Delete
+                </Button>
+              </div>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <TooltipProvider>
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[50px]">
+                    <Checkbox
+                      checked={
+                        selectedFiles.length === sortedFiles.length &&
+                        sortedFiles.length > 0
+                      }
+                      indeterminate={isIndeterminate}
+                      onCheckedChange={handleSelectAll}
+                      aria-label="Select all files"
+                    />
+                  </TableHead>
                   <TableHead className="w-[400px]">
                     <Button
                       variant="ghost"
@@ -251,7 +374,7 @@ export default function FilesPage() {
                 {sortedFiles.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={5}
+                      colSpan={6}
                       className="text-center py-8 text-muted-foreground"
                     >
                       No files uploaded yet
@@ -259,7 +382,21 @@ export default function FilesPage() {
                   </TableRow>
                 ) : (
                   sortedFiles.map((file) => (
-                    <TableRow key={file.id}>
+                    <TableRow
+                      key={file.id}
+                      className={
+                        selectedFiles.includes(file.id) ? "bg-muted/50" : ""
+                      }
+                    >
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedFiles.includes(file.id)}
+                          onCheckedChange={(checked) =>
+                            handleSelectFile(file.id, checked === true)
+                          }
+                          aria-label={`Select ${file.name}`}
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">{file.name}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
@@ -320,6 +457,55 @@ export default function FilesPage() {
           </TooltipProvider>
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+            <AlertDialogDescription>
+              {filesToDelete.length === 1
+                ? "Are you sure you want to delete this file? This action cannot be undone."
+                : `Are you sure you want to delete ${filesToDelete.length} files? This action cannot be undone.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Download Confirmation Dialog */}
+      <AlertDialog
+        open={showDownloadConfirm}
+        onOpenChange={setShowDownloadConfirm}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Download</AlertDialogTitle>
+            <AlertDialogDescription>
+              {filesToDownload.length === 1
+                ? "Are you sure you want to download this file?"
+                : `Are you sure you want to download ${filesToDownload.length} files?`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDownload}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Download
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
