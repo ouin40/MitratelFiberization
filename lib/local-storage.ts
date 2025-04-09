@@ -120,13 +120,16 @@ export const processFiles = async (files: File[]): Promise<FileWithFlags[]> => {
       const noDate = file.name.startsWith("X");
       const noId = file.name.startsWith("-");
 
+      // Use the file's last modified date instead of current date
+      const fileDate = new Date(file.lastModified).toISOString();
+
       return {
         id,
         name: file.name,
         size: file.size,
         type: file.type,
         data,
-        uploadedAt: new Date().toISOString(),
+        uploadedAt: fileDate, // Use original file date
         flags: {
           noDate,
           noId,

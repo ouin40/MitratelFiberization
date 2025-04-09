@@ -66,7 +66,7 @@ export default function FilesPage() {
     setIsUploading(true);
 
     try {
-      // Process files locally
+      // Process files locally using original file dates
       const processedFiles = await processFiles(Array.from(e.target.files));
 
       // Save to IndexedDB
@@ -111,6 +111,19 @@ export default function FilesPage() {
     if (bytes < 1024) return bytes + " B";
     else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
     else return (bytes / 1048576).toFixed(1) + " MB";
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+
+    // Format: DD/MM/YYYY HH:MM
+    return new Intl.DateTimeFormat("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(date);
   };
 
   const handleDeleteFile = async (id: string) => {
@@ -222,7 +235,7 @@ export default function FilesPage() {
                       onClick={() => handleSort("uploadedAt")}
                       className="flex items-center p-0 h-auto font-medium"
                     >
-                      Upload Date
+                      File Date
                       {sortField === "uploadedAt" &&
                         (sortDirection === "asc" ? (
                           <ArrowDownAZ className="ml-2 h-4 w-4" />
@@ -278,9 +291,7 @@ export default function FilesPage() {
                         </div>
                       </TableCell>
                       <TableCell>{formatFileSize(file.size)}</TableCell>
-                      <TableCell>
-                        {new Date(file.uploadedAt).toLocaleString()}
-                      </TableCell>
+                      <TableCell>{formatDate(file.uploadedAt)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
