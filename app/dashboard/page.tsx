@@ -1,52 +1,70 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import type { Metadata } from "next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-export const metadata: Metadata = {
-  title: "Dashboard",
-  description: "View your project statistics",
-};
+import { getAllFiles, type FileWithFlags } from "@/lib/local-storage";
 
 export default function DashboardPage() {
+  const [files, setFiles] = useState<FileWithFlags[]>([]);
+
+  useEffect(() => {
+    const loadFiles = async () => {
+      const data = await getAllFiles();
+      setFiles(data);
+    };
+
+    loadFiles();
+  }, []);
+
+  const totalFiles = files.length;
+
+  const filesWithoutDate = files.filter((file) => file.flags.noDate).length;
+
+  const filesWithoutId = files.filter((file) => file.flags.noId).length;
+
+  const validFiles = files.filter(
+    (file) => !file.flags.noDate && !file.flags.noId
+  ).length;
+
   return (
     <div className="space-y-4">
       <h1 className="text-3xl font-bold">Dashboard</h1>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Projects
-            </CardTitle>
+          <CardHeader>
+            <CardTitle className="text-sm">Total Files</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
+            <div className="text-2xl font-bold">{totalFiles}</div>
           </CardContent>
         </Card>
+
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Active Projects
-            </CardTitle>
+          <CardHeader>
+            <CardTitle className="text-sm">Valid Files</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8</div>
+            <div className="text-2xl font-bold">{validFiles}</div>
           </CardContent>
         </Card>
+
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Completed Projects
-            </CardTitle>
+          <CardHeader>
+            <CardTitle className="text-sm">Missing Date</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">4</div>
+            <div className="text-2xl font-bold">{filesWithoutDate}</div>
           </CardContent>
         </Card>
+
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Files</CardTitle>
+          <CardHeader>
+            <CardTitle className="text-sm">Missing ID</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">36</div>
+            <div className="text-2xl font-bold">{filesWithoutId}</div>
           </CardContent>
         </Card>
       </div>
